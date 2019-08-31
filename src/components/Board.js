@@ -4,8 +4,10 @@ import Square from "./Square";
 const Board = () => {
   const [squares, setSquares] = useState(Array(9).fill(null));
 
-  const handleClick = e => {
-    console.log("clicked");
+  const handleClick = i => {
+    const newSquares = squares.slice();
+    newSquares[i] = "X";
+    setSquares(newSquares);
   };
 
   const renderSquare = i => {
