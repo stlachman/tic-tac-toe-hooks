@@ -1,38 +1,14 @@
 import React, { useState } from "react";
 
-import { calculateWinner } from "../utils/game-logic";
 import Square from "./Square";
 
-const Board = () => {
-  const [squares, setSquares] = useState(Array(9).fill(null));
-  const [xIsNext, setXIsNext] = useState(true);
-
-  const handleClick = i => {
-    const newSquares = squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
-      return;
-    }
-    newSquares[i] = xIsNext ? "X" : "O";
-    setSquares(newSquares);
-    setXIsNext(!xIsNext);
-  };
-
+const Board = props => {
   const renderSquare = i => {
-    return <Square value={squares[i]} onClick={() => handleClick(i)} />;
+    return <Square value={props.squares[i]} onClick={() => props.onClick(i)} />;
   };
-
-  const winner = calculateWinner(squares);
-  let status;
-
-  if (winner) {
-    status = `Winner: ${winner}`;
-  } else {
-    status = `Next player: ${xIsNext ? "X" : "O"}`;
-  }
 
   return (
     <div>
-      <div className="status">{status}</div>
       <div className="board-row">
         {renderSquare(0)}
         {renderSquare(1)}
