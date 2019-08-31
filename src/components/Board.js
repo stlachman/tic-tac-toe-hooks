@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+
+import { calculateWinner } from "../utils/game-logic";
 import Square from "./Square";
 
 const Board = () => {
@@ -7,6 +9,9 @@ const Board = () => {
 
   const handleClick = i => {
     const newSquares = squares.slice();
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
     newSquares[i] = xIsNext ? "X" : "O";
     setSquares(newSquares);
     setXIsNext(!xIsNext);
@@ -16,7 +21,14 @@ const Board = () => {
     return <Square value={squares[i]} onClick={() => handleClick(i)} />;
   };
 
-  const status = `Next player: ${xIsNext ? "X" : "O"}`;
+  const winner = calculateWinner(squares);
+  let status;
+
+  if (winner) {
+    status = `Winner: ${winner}`;
+  } else {
+    status = `Next player: ${xIsNext ? "X" : "O"}`;
+  }
 
   return (
     <div>
