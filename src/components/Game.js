@@ -1,54 +1,89 @@
-import React, { useState } from "react";
+import React from "react";
 import Board from "./Board";
 import { calculateWinner } from "../utils/game-logic";
 
-const Game = () => {
-  const [history, setHistory] = useState([{ squares: Array(9).fill(null) }]);
-  const [xIsNext, setXIsNext] = useState(true);
-  const [stepNumber, setStepNumber] = useState(0);
+function historyReducer(state, action) {
+  const { history, entryNumber } = state;
+  switch (action.type) {
+    case "ADD_ENTRY": {
+      const newHistory = history.slice(0, entryNumber + 1);
+      newHistory[newHistory.length] = action.newEntry;
+      return {
+        history: newHistory,
+        entryNumber: newHistory.length - 1
+      };
+    }
+    case "GO_TO_ENTRY": {
+      return {
+        ...state,
+        entryNumber: action.entryNumber
+      };
+    }
+    default:
+      throw new Error(`Unhandled action type: ${action.type}`);
+  }
+}
 
-  const handleClick = i => {
-    const timeHistory = history.slice(0, stepNumber + 1);
-    const current = timeHistory[timeHistory.length - 1];
-    const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
+function useHistory(initialHistory = [], initialEntryNumber = 0) {
+  const [state, dispatch] = React.useReducer(historyReducer, {
+    history: initialHistory,
+    entryNumber: initialEntryNumber
+  });
+  const { history, entryNumber } = state;
+  const current = history[entryNumber];
+  const goToEntry = newEntryNumber =>
+    dispatch({ type: "GO_TO_ENTRY", entryNumber: newEntryNumber });
+  const addEntry = newEntry => dispatch({ type: "ADD_ENTRY", newEntry });
+  return { history, entryNumber, current, goToEntry, addEntry };
+}
+
+function useGame() {
+  const { history, entryNumber, current, goToEntry, addEntry } = useHistory([
+    { squares: Array(9).fill(null) }
+  ]);
+  const xIsNext = entryNumber % 2 === 0;
+  const { squares } = current;
+
+  function selectSquare(square) {
+    if (calculateWinner(squares) || squares[square]) {
       return;
     }
-    squares[i] = xIsNext ? "X" : "O";
-    setHistory(timeHistory.concat({ squares: squares }));
-    setStepNumber(timeHistory.length);
-    setXIsNext(!xIsNext);
-  };
+    const newSquares = [...squares];
+    newSquares[square] = xIsNext ? "X" : "O";
 
-  const jumpTo = step => {
-    setStepNumber(step);
-    setXIsNext(step % 2 === 0);
-  };
+    addEntry({ squares: newSquares });
+  }
 
-  const current = history[stepNumber];
-  const winner = calculateWinner(current.squares);
-
-  const moves = history.map((step, move) => {
-    const desc = move ? `Go to move # ${move}` : `Go to game start`;
-    return (
-      <li key={move}>
-        <button onClick={() => jumpTo(move)}>{desc}</button>
-      </li>
-    );
-  });
-
+  const winner = calculateWinner(squares);
   let status;
-
   if (winner) {
     status = `Winner: ${winner}`;
+  } else if (squares.every(Boolean)) {
+    status = `Scratch: Cat's game`;
   } else {
     status = `Next player: ${xIsNext ? "X" : "O"}`;
   }
 
+  return { history, squares, selectSquare, goToStep: goToEntry, status };
+}
+
+function Game() {
+  const { history, squares, selectSquare, goToStep, status } = useGame();
+
+  const moves = history.map((step, stepNumber) => {
+    const desc = stepNumber ? `Go to move #${stepNumber}` : "Go to game start";
+
+    return (
+      <li key={stepNumber}>
+        <button onClick={() => goToStep(stepNumber)}>{desc}</button>
+      </li>
+    );
+  });
+
   return (
     <div className="game">
       <div className="game-board">
-        <Board squares={current.squares} onClick={i => handleClick(i)} />
+        <Board onClick={selectSquare} squares={squares} />
       </div>
       <div className="game-info">
         <div>{status}</div>
@@ -56,6 +91,6 @@ const Game = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Game;
