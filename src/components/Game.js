@@ -55,7 +55,7 @@ function Game() {
       </div>
       <div className="game-info">
         <div>{status}</div>
-        <div>{xIsNext ? "X's" : "O's"} Turn</div>
+        {!winner && <div>{xIsNext ? "X's" : "O's"} Turn</div>}
       </div>
     </div>
   );
